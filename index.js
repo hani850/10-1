@@ -5,7 +5,27 @@ const morgan = require('morgan');
 const path = require('path');
 
 const app = express();
-const port = 3000;
+// Get port from environment and store in Express.
+let port = normalizePort(process.env.PORT || '3000');
+app.set('port', port);
+/**
+ * Normalize a port into a number, string, or false.
+ */
+function normalizePort(val) {
+    let port = parseInt(val, 10);
+
+    if (isNaN(port)) {
+        // named pipe
+        return val;
+    }
+
+    if (port >= 0) {
+        // port number
+        return port;
+    }
+
+    return false;
+}
 
 let sqlite3 = require('sqlite3').verbose();
 let db = new sqlite3.Database('myDB');
@@ -27,7 +47,7 @@ app.get('/result', (request, respond, next) => {
 
 //default route handle for ejs template
 app.get('/', (request, respond, next) => {
-    respond.render('index', {title: 'Simple Form'});
+    respond.render('index', { title: 'Simple Form' });
 });
 //now: currentTime.toString() } 
 
@@ -61,19 +81,20 @@ app.post('/submitsurvey', (req, res, next) => {
     for (let i of q2Array) {
         userQ2 += i;
     }
-    userQ2 = userQ2 /  q1Array.length;
+    userQ2 = userQ2 / q1Array.length;
 
     userQ3 = 0;
     for (let i of q3Array) {
         userQ3 += i;
     }
-    userQ3 = userQ3 /  q1Array.length;
+    userQ3 = userQ3 / q1Array.length;
 
     let currentTime = new Date();
     currentTime = currentTime.toString();
     submissionCount++;
 
-    db.run(`INSERT INTO User (id, fname, sname, email, date, q1, q2, q3, colour, comment) VALUES (serFirstname, userLastname, userEmail, currentTime, userQ1, userQ2, userQ3, userFavColour, useComments)`);
+    let stmt = db.run(`INSERT INTO User VALUES (${userFirstname}, ${userLastname}, ${userEmail}, ${currentTime}, ${userQ1}, ${userQ2}, ${userQ3}, ${userFavColour}, ${useComments})`);
+
     res.render('result',
         {
             title: 'Results',
@@ -83,7 +104,7 @@ app.post('/submitsurvey', (req, res, next) => {
             email: userEmail,
             FavouriteButterflyColour: userFavColour,
             Comment: userComments,
-        
+
             Count: submissionCount,
             Q1: userQ1,
             Q2: userQ2,
@@ -93,34 +114,66 @@ app.post('/submitsurvey', (req, res, next) => {
     res.send('Thank you for submitting the form data');
 });
 
+app.get('/users', function (req, res) {
+    let html = '';
+    //HTML code to display multiple tables with DB data
+        html += '<body><div class="container">';
+        html += '<h3> The User Information Table </h3>';
+        html += '<table class="table">';
+        html += '<thead class="thead-dark"><tr>';
+        html += '<th>Name</th><th>Password</th><th>Option</th>';
+        html += '<tr></thead><tbody>';
 
-db.serialize(function() {
+        // Retrieve data from table User on the server 
+        // and display it in a web page table structure
+        db.all('SELECT * FROM User', function (err, rows) {
+            if (err) {
+                return console.error(err.message);
+            }
+            if (rows.length === 0) {
+                console.log("Array is empty!")
+                html += '<tr><td colspan="3"> No data found </td></tr>';
+            } else {
+                rows.forEach(function (row) {
+                    html += '<tr>';
+                    html += '<td>' + row.name + '</td>';
+                    html += '<td>' + row.password + '</td>';
+                    html += '<td>' + row.option + '</td></tr>';
+                });
+            }
+
+            html += '</tbody></table>';
+            html += '</div>';
+            html += '</body></html>';
+            res.send(html);
+
+        });
+});
+
+db.serialize(function () {
     /*db.run("CREATE TABLE IF NOT EXISTS User (id INTEGER, fname TEXT, sname TEXT, email TEXT, date TEXT NOT NULL, q1 INTEGER, q2 INTEGER, q3 INTEGER, colour TEXT, comment TEXT)");
     db.run("DELETE FROM User");
-    
     db.run(`INSERT INTO User (id, fname, sname, email, date, q1, q2, q3, colour, comment) VALUES ("Jason", "deakin2017", "1")`);
     */
-   // NOTE: The order of the fields relates to the order of the Values provided
-       
-    
+    // NOTE: The order of the fields relates to the order of the Values provided
     // The SELECT operation is performed on the DB one row at a time and the function
     // is called for each row 'selected'
-   
+
     console.log('Display all content from all rows of the DB');
-    db.each("SELECT * FROM User", function(err, row) {
-        console.log("[all] Name: " + row.fname + "  Lastname: " + row.sname + "  email: " + row.email); 
+    db.each("SELECT * FROM User", function (err, row) {
+        console.log("[all] Name: " + row.fname + "  Lastname: " + row.sname + "  email: " + row.email);
     });
 
     //id, fname, sname, email, date, q1, q2, q3, colour, comment
     // Or you can select 'specific' fields from a data row
-   /*
-   console.log('Display only the name and option fields from all rows of the DB');
-    db.each("SELECT name, option FROM User", function(err, row) {
-        console.log("[subset] Name: " + row.name + "  Option: " + row.option); 
-    });
-    */
+    /*
+    console.log('Display only the name and option fields from all rows of the DB');
+     db.each("SELECT name, option FROM User", function(err, row) {
+         console.log("[subset] Name: " + row.name + "  Option: " + row.option); 
+     });
+     */
 });
-db.close(); 
+db.close();
 
 
 // ********************************************
