@@ -28,7 +28,7 @@ function normalizePort(val) {
 }
 
 let sqlite3 = require('sqlite3').verbose();
-let db = new sqlite3.Database('myDB');
+let db = new sqlite3.Database('server/mySurveyDB.db');
 
 // Include the logging for all requests
 app.use(morgan('common'));
