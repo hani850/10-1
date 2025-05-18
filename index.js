@@ -93,7 +93,7 @@ app.post('/submitsurvey', (req, res, next) => {
     currentTime = currentTime.toString();
     submissionCount++;
 
-    let stmt = db.run(`INSERT INTO User VALUES (${userFirstname}, ${userLastname}, ${userEmail}, ${currentTime}, ${userQ1}, ${userQ2}, ${userQ3}, ${userFavColour}, ${useComments})`);
+    let stmt = db.run(`INSERT INTO User VALUES (${userFirstname}, ${userLastname}, ${userEmail}, ${currentTime}, ${userQ1}, ${userQ2}, ${userQ3}, ${userFavColour}, ${userComments})`);
 
     res.render('result',
         {
@@ -118,7 +118,7 @@ app.get('/users', function (req, res) {
     let html = '';
     //HTML code to display multiple tables with DB data
         html += '<body><div class="container">';
-        html += '<h3> The User Information Table </h3>';
+        html += '<h3> Survey Information Table </h3>';
         html += '<table class="table">';
         html += '<thead class="thead-dark"><tr>';
         html += '<th>Name</th><th>Password</th><th>Option</th>';
@@ -136,9 +136,15 @@ app.get('/users', function (req, res) {
             } else {
                 rows.forEach(function (row) {
                     html += '<tr>';
-                    html += '<td>' + row.name + '</td>';
-                    html += '<td>' + row.password + '</td>';
-                    html += '<td>' + row.option + '</td></tr>';
+                    html += '<td>' + row.userFirstname + '</td>';
+                    html += '<td>' + row.userLastname + '</td>';
+                    html += '<td>' + row.userEmail + '</td>';
+                    html += '<td>' + row.currentTime + '</td>';
+                    html += '<td>' + row.userQ1 + '</td>';
+                    html += '<td>' + row.userQ2 + '</td>';
+                    html += '<td>' + row.userQ3 + '</td>';
+                    html += '<td>' + row.userFavColour + '</td>';
+                    html += '<td>' + row.userComments + '</td></tr>';
                 });
             }
 
@@ -149,32 +155,6 @@ app.get('/users', function (req, res) {
 
         });
 });
-
-db.serialize(function () {
-    /*db.run("CREATE TABLE IF NOT EXISTS User (id INTEGER, fname TEXT, sname TEXT, email TEXT, date TEXT NOT NULL, q1 INTEGER, q2 INTEGER, q3 INTEGER, colour TEXT, comment TEXT)");
-    db.run("DELETE FROM User");
-    db.run(`INSERT INTO User (id, fname, sname, email, date, q1, q2, q3, colour, comment) VALUES ("Jason", "deakin2017", "1")`);
-    */
-    // NOTE: The order of the fields relates to the order of the Values provided
-    // The SELECT operation is performed on the DB one row at a time and the function
-    // is called for each row 'selected'
-
-    console.log('Display all content from all rows of the DB');
-    db.each("SELECT * FROM User", function (err, row) {
-        console.log("[all] Name: " + row.fname + "  Lastname: " + row.sname + "  email: " + row.email);
-    });
-
-    //id, fname, sname, email, date, q1, q2, q3, colour, comment
-    // Or you can select 'specific' fields from a data row
-    /*
-    console.log('Display only the name and option fields from all rows of the DB');
-     db.each("SELECT name, option FROM User", function(err, row) {
-         console.log("[subset] Name: " + row.name + "  Option: " + row.option); 
-     });
-     */
-});
-db.close();
-
 
 // ********************************************
 // *** Other route/request handlers go here ***
